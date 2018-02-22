@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liezh.dao.SubjectDao">
+
+    <select id="querySubject" resultType="com.liezh.domain.dto.subject.SubjectInfoDto">
+        SELECT s.id, s.title, s.synopsis, s.cover, s.create_time, s.update_time,
+                      s.creator_id,
+                      u.account AS creatorAccount,      u.username AS creatorUsername,
+                      u.avatar AS creatorAvatar,             u.synopsis AS creatorSynopsis
+        FROM subject s LEFT JOIN user u ON s.creator_id = u.id
+        <where>
+            AND s.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            AND u.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="title != null">
+                AND s.title LIKE CONCAT('%',#{title},'%')
+            </if>
+            <if test="creatorId != null">
+                AND s.creator_id = #{creatorId}
+            </if>
+        </where>
+        ORDER BY s.create_time DESC
+    </select>
+
+    <select id="querySubjectById" resultType="com.liezh.domain.dto.subject.SubjectInfoDto">
+        SELECT s.id, s.title, s.synopsis, s.cover, s.create_time, s.update_time,
+                      s.creator_id,
+                      u.account AS creatorAccount,      u.username AS creatorUsername,
+                      u.avatar AS creatorAvatar,             u.synopsis AS creatorSynopsis
+        FROM subject s LEFT JOIN user u ON s.creator_id = u.id
+        WHERE
+        s.id=#{subjectId}
+        AND s.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+        AND u.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertSubject" useGeneratedKeys="true" keyProperty="id"
+            keyColumn="id" parameterType="com.liezh.domain.entity.Subject">
+        INSERT INTO
+        subject ( title,
+        <if test="synopsis != null">
+            synopsis,
+        </if>
+        <if test="cover != null">
+            cover,
+        </if>
+        <if test="creatorId != null">
+            creator_id,
+        </if>
+        create_time, update_time, is_lock)
+        VALUES
+        ( #{title},
+        <if test="synopsis != null">
+            #{synopsis},
+        </if>
+        <if test="cover != null">
+            #{cover},
+        </if>
+        <if test="creatorId != null">
+            #{creatorId},
+        </if>
+        now() ,now(), ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK})
+    </insert>
+
+    <update id="updateSubject" parameterType="com.liezh.domain.entity.Subject">
+        UPDATE subject
+        <set>
+            <if test="title != null">title=#{title}, </if>
+            <if test="synopsis != null">synopsis=#{synopsis}, </if>
+            <if test="cover != null">cover=#{cover}, </if>
+            <!-- <if test="creatorId != null">creator_id=#{creatorId}, </if>-->
+            <!--<if test="createTime != null">create_time=#{createTime}</if>-->
+            update_time=now(),
+            <if test="isLock != null">is_lock=#{isLock} </if>
+        </set>
+        WHERE id=#{id}
+    </update>
+
+    <delete id="deleteSubject">
+        DELETE FROM
+        subject
+        WHERE
+        id = #{subjectId}
+    </delete>
+
+    <select id="countSubjectBySIdAndCid" resultType="integer">
+        SELECT count(id)
+        FROM subject
+        WHERE id=#{subjectId} AND creator_id = #{creatorId}
+    </select>
+
+    <select id="countSubjectRecipeById" resultType="integer">
+        SELECT count(1)
+        FROM subject_recipe
+        WHERE subject_id = #{subjectId}
+        AND recipe_id = #{recipeId}
+        <if test="status != null">
+            AND status = ${status}
+        </if>
+    </select>
+
+    <select id="querySubjectRecipe" resultType="com.liezh.domain.dto.recipe.RecipeInfoDto">
+        SELECT  r.id, r.title, r.cover, r.synopsis, r.status, r.good_count, r.read_count, r.release_time,
+                      r.author_id,
+                      u.account AS authorAccount,     u.username AS authorUsername,
+                      u.avatar AS authorAvatar,      u.synopsis AS authorSynopsis
+        FROM recipe r
+        LEFT JOIN user u ON r.author_id = u.id
+        LEFT JOIN subject_recipe sr ON sr.recipe_id = r.id
+        WHERE sr.subject_id = #{subjectId}
+          AND sr.status = #{status}
+          AND r.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+          AND u.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertSubjectRecipe" >
+        INSERT INTO
+        subject_recipe (
+          subject_id,
+          recipe_id,
+          status,
+          create_time
+        ) VALUES (
+          #{subjectId},
+          #{recipeId},
+          ${@com.liezh.domain.constant.ContributeStatus@TO_CHECK.getCode()},
+          now()
+        )
+    </insert>
+
+    <update id="updateSubjectRecipeStatus" >
+        UPDATE subject_recipe
+        <set>
+            status = #{status}
+        </set>
+        WHERE subject_id = #{subjectId} AND recipe_id = #{recipeId}
+    </update>
+
+    <select id="getSubjectByRecipeId" resultType="com.liezh.domain.dto.subject.SubjectInfoDto">
+        SELECT s.id, s.title, s.synopsis, s.cover, s.create_time, s.update_time,
+                      s.creator_id,
+                      u.account AS creatorAccount,      u.username AS creatorUsername,
+                      u.avatar AS creatorAvatar,             u.synopsis AS creatorSynopsis
+        FROM subject s
+        LEFT JOIN user u ON s.creator_id = u.id
+        LEFT JOIN subject_recipe sr ON sr.subject_id = s.id
+        WHERE sr.recipe_id = #{recipeId}
+            AND sr.status = ${@com.liezh.domain.constant.ContributeStatus@PASS.getCode()}
+            AND s.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            AND u.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <select id="countFavoriteSubject" resultType="integer">
+        SELECT count(1)
+        FROM subject_favorites
+        WHERE
+        user_id = #{userId}
+        AND subject_id = #{subjectId}
+    </select>
+    
+    <select id="getAllFavoriteSubjectIdSet" resultType="long">
+        SELECT subject_id
+        FROM subject_favorites
+        WHERE user_id = #{userId}
+    </select>
+    
+    
+</mapper>

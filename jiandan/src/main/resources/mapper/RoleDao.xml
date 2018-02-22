@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liezh.dao.RoleDao">
+
+    <select id="queryRole" parameterType="com.liezh.domain.entity.Role" resultType="com.liezh.domain.entity.Role">
+        SELECT id, name, status, create_time, update_time
+        FROM role
+        <where>
+            AND is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="name != null">
+                AND  name LIKE CONCAT('%',#{name},'%')
+            </if>
+            <if test="status != null">
+                AND status=#{status}
+            </if>
+        </where>
+        ORDER BY create_time
+        DESC
+    </select>
+
+    <select id="queryRoleById" resultType="com.liezh.domain.entity.Role">
+        SELECT id, name, status, create_time, update_time
+        FROM role
+        WHERE
+          id=#{roleId} AND is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertRole" useGeneratedKeys="true" keyProperty="id"
+            keyColumn="id" parameterType="com.liezh.domain.entity.Role">
+        INSERT INTO
+        role(name,
+           <if test="status != null">
+             status,
+           </if>
+          create_time, update_time, is_lock)
+        VALUES
+        (#{name},
+           <if test="status != null">
+              #{status},
+           </if>
+        now() ,now(), ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK})
+    </insert>
+
+    <update id="updateRole" parameterType="com.liezh.domain.entity.Role">
+        UPDATE role
+        <set>
+            <if test="name != null">name=#{name}, </if>
+            <if test="status != null">status=#{status}, </if>
+            <!--<if test="createTime != null">create_time=#{createTime}</if>-->
+            update_time=now(),
+            <if test="isLock != null">is_lock=#{isLock} </if>
+        </set>
+        WHERE id=#{id}
+    </update>
+
+    <delete id="deleteRole">
+        DELETE FROM
+        role
+        WHERE
+        id = #{roleId}
+    </delete>
+
+    <select id="queryRoleByName" resultType="com.liezh.domain.entity.Role">
+        SELECT id, name, status, create_time, update_time
+        FROM role
+        WHERE name = #{name}
+        AND is_lock = ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+</mapper>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liezh.dao.TagDao">
+
+    <select id="queryTag" resultType="com.liezh.domain.entity.Tag">
+        SELECT id, name, query_count
+        FROM tag
+        <where>
+            AND is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="name != null">
+                AND name LIKE CONCAT('%',#{name},'%')
+            </if>
+        </where>
+        ORDER BY create_time DESC, query_count DESC
+    </select>
+
+    <select id="queryTagById" resultType="com.liezh.domain.entity.Tag">
+        SELECT id, name, query_count, create_time, update_time
+        FROM tag
+        WHERE
+        id=#{tagId} AND is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertTag" useGeneratedKeys="true" keyProperty="id"
+            keyColumn="id" parameterType="com.liezh.domain.entity.Tag">
+        INSERT INTO
+        tag ( name,
+        <if test="queryCount != null">
+            query_count,
+        </if>
+        create_time, update_time, is_lock)
+        VALUES
+        (#{name},
+        <if test="queryCount != null">
+            #{queryCount},
+        </if>
+        now() ,now(), ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK})
+    </insert>
+
+    <update id="updateTag" parameterType="com.liezh.domain.entity.Tag">
+        UPDATE tag
+        <set>
+            <if test="name != null">name=#{name}, </if>
+            <if test="queryCount != null">query_count=#{queryCount}, </if>
+            <!--<if test="createTime != null">create_time=#{createTime}</if>-->
+            update_time=now(),
+            <if test="isLock != null">is_lock=#{isLock} </if>
+        </set>
+        WHERE id=#{id}
+    </update>
+
+    <delete id="deleteTag">
+        DELETE FROM
+        tag
+        WHERE
+        id = #{tagId}
+    </delete>
+
+    <select id="queryTagByName" resultType="com.liezh.domain.entity.Tag">
+        SELECT id, name, query_count, create_time, update_time
+        FROM tag
+        WHERE
+        is_lock = ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+        AND name = #{name}
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liezh.dao.UserDao">
+
+
+
+    <select id="queryUser" parameterType="com.liezh.domain.entity.User" resultType="com.liezh.domain.dto.user.UserInfoDto">
+        SELECT  id, account, username, avatar, synopsis
+        FROM user
+        <where>
+            AND is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="account != null">
+                AND account like CONCAT('%',#{account},'%')
+            </if>
+            <if test="username != null">
+                AND username like CONCAT('%', #{username}, '%')
+            </if>
+            <if test="mobile != null">
+                AND mobile = #{mobile}
+            </if>
+            <if test="email != null">
+                AND email = #{email}
+            </if>
+        </where>
+        ORDER BY create_time
+        DESC
+    </select>
+
+    <select id="queryUserById" resultType="com.liezh.domain.dto.user.UserInfoDto">
+        SELECT id, account, username, password, salt, mobile, email, avatar, synopsis, question, create_time, update_time
+        FROM user
+        WHERE
+        id=#{userId} AND is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="id"
+            keyColumn="id" parameterType="com.liezh.domain.entity.User">
+        INSERT INTO
+        user (
+        account,
+        username,
+        password,
+        salt,
+        mobile,
+        <if test="email != null">
+            email,
+        </if>
+        <if test="avatar != null">
+            avatar,
+        </if>
+        <if test="synopsis != null">
+            synopsis,
+        </if>
+        <if test="question != null">
+            question,
+        </if>
+        <if test="answer != null">
+            answer,
+        </if>
+        create_time, update_time, is_lock)
+        VALUES
+        (
+        #{account},
+        #{username},
+        #{password},
+        #{salt},
+        #{mobile},
+        <if test="email != null">
+            #{email},
+        </if>
+        <if test="avatar != null">
+            #{avatar},
+        </if>
+        <if test="synopsis != null">
+            #{synopsis},
+        </if>
+        <if test="question != null">
+            #{question},
+        </if>
+        <if test="answer != null">
+            #{answer},
+        </if>
+        now() ,now(), ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK})
+    </insert>
+
+    <update id="updateUser" parameterType="com.liezh.domain.entity.User">
+        UPDATE user
+        <set>
+            <if test="account != null">account=#{account}, </if>
+            <if test="username != null">username=#{username}, </if>
+            <if test="password != null">password=#{password}, </if>
+            <if test="mobile != null">mobile=#{mobile}, </if>
+            <if test="email != null">email=#{email}, </if>
+            <if test="avatar != null">avatar=#{avatar}, </if>
+            <if test="synopsis != null">synopsis=#{synopsis},</if>
+            <if test="question != null">question=#{question}, </if>
+            <if test="answer != null">answer=#{answer}, </if>
+            <!--<if test="createTime != null">create_time=#{createTime}</if>-->
+            update_time=now(),
+            <if test="isLock != null">is_lock=#{isLock}</if>
+        </set>
+        WHERE id=#{id}
+    </update>
+
+    <delete id="deleteUser">
+        DELETE FROM
+        user
+        WHERE
+        id = #{userId}
+    </delete>
+
+    <select id="countUser" resultType="integer">
+        SELECT COUNT(id)
+        FROM user
+        <where>
+            <if test="id != null">
+                OR id = #{id}
+            </if>
+            <if test="account != null">
+                OR account = #{account}
+            </if>
+            <if test="mobile != null">
+                OR mobile = #{mobile}
+            </if>
+            <if test="email != null">
+                OR email = #{email}
+            </if>
+        </where>
+    </select>
+
+    <resultMap type="com.liezh.domain.dto.user.UserInfoDto" id="userMap">
+        <id property="id" column="id" />
+        <result property="account" column="account" />
+        <result property="username" column="username" />
+        <result property="password" column="password" />
+        <result property="salt" column="salt" />
+        <result property="mobile" column="mobile" />
+        <result property="email" column="email" />
+        <result property="avatar" column="avatar" />
+        <result property="synopsis" column="synopsis" />
+        <result property="question" column="question" />
+        <result property="answer" column="answer" />
+    </resultMap>
+
+    <resultMap id="userRoleMap" type="com.liezh.domain.dto.user.UserInfoDto"  extends="userMap">
+        <collection property="roles" ofType="com.liezh.domain.entity.Role">
+            <id property="id" column="role_id" />
+            <result property="name" column="role_name" />
+            <result property="status" column="role_status" />
+            <result property="createTime" column="role_create_time" />
+        </collection>
+    </resultMap>
+
+    <select id="queryUserByAccountOrMobile" resultMap="userRoleMap">
+        SELECT u.id, u.account, u.username, u.password, u.salt, u.mobile, u.email, u.avatar, u.synopsis, u.question,
+                      r.id AS role_id, r.name AS role_name, r.status AS role_status, r.create_time AS role_create_time
+        FROM user u LEFT JOIN user_role ur ON u.id = ur.user_id
+                                LEFT JOIN role r ON r.id = ur.role_id
+        <where>
+            u.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="accountOrMobile != null">
+                AND ( u.account=#{accountOrMobile}
+                            OR u.mobile=#{accountOrMobile} )
+            </if>
+        </where>
+    </select>
+    
+    <select id="countIdolById" resultType="integer">
+        SELECT count(fans_id)
+        FROM user_attentions
+        WHERE fans_id = #{fansId} AND idol_id = #{idolId}
+    </select>
+
+    <insert id="follow">
+        INSERT INTO user_attentions (
+          fans_id,
+          idol_id,
+          create_time
+        ) VALUES (
+          #{fansId},
+          #{idolId},
+          now()
+        )
+    </insert>
+
+    <delete id="unfollow">
+        DELETE FROM
+        user_attentions
+        WHERE fans_id = #{fansId} AND idol_id = #{idolId}
+    </delete>
+
+    <select id="getAllIdolById" resultType="com.liezh.domain.dto.user.UserInfoDto">
+        SELECT u.id, u.account, u.username, u.avatar, u.synopsis
+        FROM user u LEFT JOIN user_attentions ua ON u.id = ua.idol_id
+        WHERE ua.fans_id = #{fansId}
+        AND u.is_lock = ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <select id="getAllFansById" resultType="com.liezh.domain.dto.user.UserInfoDto">
+        SELECT u.id, u.account, u.username, u.avatar, u.synopsis
+        FROM user u LEFT JOIN user_attentions ua ON u.id = ua.fans_id
+        WHERE ua.idol_id = #{idolId}
+        AND u.is_lock = ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <select id="getAllIdolIdSet" resultType="long">
+        SELECT idol_id
+        FROM user_attentions
+        WHERE fans_id = #{fansId}
+    </select>
+
+    <select id="checkAnswer" resultType="int" parameterType="map">
+        SELECT
+        count(1)
+        from user
+        where account = #{account}
+        and question = #{question}
+        and answer = #{answer}
+    </select>
+    
+    <insert id="userRoleMapping" >
+        INSERT user_role (
+        user_id,
+        role_id,
+        create_time
+        ) VALUES (
+        #{userId},
+        #{roleId},
+        now()
+        )
+    </insert>
+
+
+</mapper>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liezh.dao.FoodnoteDao">
+
+    <select id="queryFoodnote" resultType="com.liezh.domain.dto.foodnote.FoodnoteInfoDto">
+        SELECT f.id, f.title, f.content, f.status, f.good_count, f.read_count,
+                      f.release_time,  f.create_time, f.update_time,
+                      f.author_id,
+                      u.account AS authorAccount,         u.username AS authorUsername,
+                      u.avatar AS authorAvatar,                u.synopsis AS authorSynopsis
+        FROM foodnote f LEFT JOIN user u ON f.author_id = u.id
+        <where>
+            AND f.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="title != null">
+                AND f.title LIKE CONCAT('%',#{title},'%')
+            </if>
+            <if test="status != null">
+                AND f.status = #{status}
+            </if>
+            <if test="authorId != null">
+                AND f.author_id = #{authorId}
+            </if>
+        </where>
+        ORDER BY f.create_time DESC
+    </select>
+
+    <select id="queryFoodnoteById" resultType="com.liezh.domain.dto.foodnote.FoodnoteInfoDto">
+        SELECT f.id, f.title, f.content, f.status, f.good_count, f.read_count,
+                      f.release_time,  f.create_time, f.update_time,
+                      f.author_id,
+                      u.account AS authorAccount,         u.username AS authorUsername,
+                      u.avatar AS authorAvatar,                u.synopsis AS authorSynopsis
+        FROM foodnote f LEFT JOIN user u ON f.author_id = u.id
+        WHERE
+        f.id=#{foodnoteId} AND f.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertFoodnote" useGeneratedKeys="true" keyProperty="id"
+            keyColumn="id" parameterType="com.liezh.domain.entity.Foodnote">
+        INSERT INTO
+        foodnote ( title,
+        <if test="content != null">
+            content,
+        </if>
+        <if test="status != null">
+            status,
+        </if>
+        <if test="goodCount != null">
+            good_count,
+        </if>
+        <if test="readCount != null">
+            read_count,
+        </if>
+        <if test="releaseTime != null">
+            release_time,
+        </if>
+        <if test="authorId != null">
+            author_id,
+        </if>
+        create_time, update_time, is_lock)
+        VALUES
+        (#{title},
+        <if test="content != null">
+            #{content},
+        </if>
+        <if test="status != null">
+            #{status},
+        </if>
+        <if test="goodCount != null">
+            #{goodCount},
+        </if>
+        <if test="readCount != null">
+            #{readCount},
+        </if>
+        <if test="releaseTime != null">
+            #{releaseTime},
+        </if>
+        <if test="authorId != null">
+            #{authorId},
+        </if>
+        now() ,now(), ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK})
+    </insert>
+
+    <update id="updateFoodnote" parameterType="com.liezh.domain.entity.Foodnote">
+        UPDATE foodnote
+        <set>
+            <if test="title != null"> title = #{title}, </if>
+            <if test="content != null"> content = #{content}, </if>
+            <if test="status != null"> status = #{status}, </if>
+            <if test="goodCount != null"> good_count = #{goodCount}, </if>
+            <if test="readCount != null"> read_count = #{readCount}, </if>
+            <if test="releaseTime != null"> releaseTime = #{releaseTime}, </if>
+            <if test="authorId != null"> author_id = #{authorId}, </if>
+            <!--<if test="createTime != null">create_time=#{createTime}</if>-->
+            update_time=now(),
+            <if test="isLock != null">is_lock=#{isLock} </if>
+        </set>
+        WHERE id=#{id}
+    </update>
+
+    <delete id="deleteFoodnote">
+        DELETE FROM
+        foodnote
+        WHERE
+        id = #{foodnoteId}
+    </delete>
+
+
+
+</mapper>

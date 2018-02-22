@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liezh.dao.RecipeDao">
+
+    <select id="queryRecipe" parameterType="com.liezh.domain.entity.Recipe" resultType="com.liezh.domain.dto.recipe.RecipeInfoDto">
+        SELECT  r.id, r.title, r.cover, r.synopsis, r.status, r.good_count, r.read_count, r.release_time,
+                      r.author_id,
+                      u.account AS authorAccount,     u.username AS authorUsername,
+                      u.avatar AS authorAvatar,      u.synopsis AS authorSynopsis
+        FROM recipe r LEFT JOIN user u ON r.author_id = u.id
+        <where>
+            AND r.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="title != null">
+                AND  r.title LIKE CONCAT('%',#{title},'%')
+            </if>
+            <if test="authorId != null">
+                AND r.author_id = #{author_id}
+            </if>
+            <if test="status != null">
+                AND r.status = #{status}
+            </if>
+        </where>
+        ORDER BY r.create_time
+        DESC
+    </select>
+
+    <select id="queryRecipeById" resultType="com.liezh.domain.dto.recipe.RecipeInfoDto">
+        SELECT r.id, r.title, r.cover, r.synopsis, r.status, r.good_count, r.read_count, r.release_time,
+                      r.author_id,
+                      u.account AS authorAccount,     u.username AS authorUsername,
+                      u.avatar AS authorAvatar,      u.synopsis AS authorSynopsis
+        FROM recipe r LEFT JOIN user u ON r.author_id = u.id
+        WHERE
+        r.id=#{recipeId}
+        AND r.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+        AND u.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertRecipe" useGeneratedKeys="true" keyProperty="id"
+            keyColumn="id" parameterType="com.liezh.domain.entity.Recipe">
+        INSERT INTO
+        recipe ( title,
+        <if test="cover != null">
+            cover,
+        </if>
+        <if test="content != null">
+            content,
+        </if>
+        <if test="synopsis != null">
+            synopsis,
+        </if>
+        <if test="process != null">
+            process,
+        </if>
+        <if test="materials != null">
+            materials,
+        </if>
+        <if test="status != null">
+            status,
+        </if>
+        <if test="authorId != null">
+            author_id,
+        </if>
+        <if test="goodCount != null">
+            good_count,
+        </if>
+        <if test="readCount != null">
+            read_count,
+        </if>
+        <if test="readCount != null">
+            read_count,
+        </if>
+        create_time, update_time, is_lock)
+        VALUES
+        ( #{title},
+        <if test="cover != null">
+            #{cover},
+        </if>
+        <if test="content != null">
+            #{content},
+        </if>
+        <if test="synopsis != null">
+            synopsis,
+        </if>
+        <if test="process != null">
+            #{process},
+        </if>
+        <if test="materials != null">
+            #{materials},
+        </if>
+        <if test="status != null">
+            #{status},
+        </if>
+        <if test="authorId != null">
+            #{authorId},
+        </if>
+        <if test="goodCount != null">
+            #{goodCount},
+        </if>
+        <if test="readCount != null">
+            #{readCount},
+        </if>
+        <if test="readCount != null">
+            #{readCount},
+        </if>
+        now() ,now(), ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK})
+    </insert>
+
+    <update id="updateRecipe" parameterType="com.liezh.domain.entity.Recipe">
+        UPDATE recipe
+        <set>
+            <if test="title != null"> title = #{title}, </if>
+            <if test="cover != null"> cover = #{cover}, </if>
+            <if test="content != null"> content = #{content}, </if>
+            <if test="synopsis != null"> synopsis = #{synopsis}, </if>
+            <if test="process != null"> process = #{process}, </if>
+            <if test="materials != null"> materials = #{materials}, </if>
+            <if test="status != null"> status = #{status}, </if>
+            <if test="authorId != null"> author_id = #{authorId}, </if>
+            <if test="goodCount != null"> good_count = #{goodCount}, </if>
+            <if test="readCount != null"> read_count = #{readCount}, </if>
+            <if test="readCount != null"> read_count = #{readCount}, </if>
+            <!--<if test="createTime != null">create_time=#{createTime}</if>-->
+            update_time=now(),
+            <if test="isLock != null">is_lock=#{isLock} </if>
+        </set>
+        WHERE id=#{id}
+    </update>
+
+    <delete id="deleteRecipe">
+        DELETE FROM
+        recipe
+        WHERE
+        id = #{recipeId}
+    </delete>
+
+    <select id="countRecipeById" resultType="integer">
+        SELECT count(1)
+        FROM recipe
+        WHERE id = #{recipeId}
+    </select>
+
+</mapper>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liezh.dao.CommentDao">
+
+    <select id="queryComment" resultType="com.liezh.domain.dto.comment.CommentInfoDto">
+        SELECT c.id, c.content, c.target_type, c.target_id, c.good_count,
+                      c.publisher_id,
+                      u.account AS  publisherAccount,      u.username AS publisherUsername,
+                      u.avatar AS publisherAvatar,              u.synopsis AS publisherSynopsis
+        FROM comment c LEFT JOIN user u ON c.publisher_id = u.id
+        <where>
+            AND c.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+            <if test="publisherId != null">
+                AND c.publisher_id = #{publisherId}
+            </if>
+            <if test="targetType != null">
+                AND c.target_type = #{targetType}
+            </if>
+            <if test="targetId != null">
+                AND c.target_id = #{targetId}
+            </if>
+        </where>
+        ORDER BY c.create_time DESC
+    </select>
+
+    <select id="queryCommentById" resultType="com.liezh.domain.dto.comment.CommentInfoDto">
+        SELECT c.id, c.content, c.target_type, c.target_id, c.good_count,
+                      c.publisher_id,
+                      u.account AS  publisherAccount,      u.username AS publisherUsername,
+                      u.avatar AS publisherAvatar,              u.synopsis AS publisherSynopsis
+        FROM comment c LEFT JOIN user u ON c.publisher_id = u.id
+        WHERE
+        c.id=#{commentId} AND c.is_lock=${@com.liezh.domain.constant.GlobalConstants@NO_LOCK}
+    </select>
+
+    <insert id="insertComment" useGeneratedKeys="true" keyProperty="id"
+            keyColumn="id" parameterType="com.liezh.domain.entity.Comment">
+        INSERT INTO
+        comment ( content,
+        <if test="targetType != null">
+            target_type,
+        </if>
+        <if test="targetId != null">
+            target_id,
+        </if>
+        <if test="goodCount != null">
+            good_count,
+        </if>
+        <if test="publisherId != null">
+            publisher_id,
+        </if>
+        create_time, update_time, is_lock)
+        VALUES
+        ( #{content},
+        <if test="targetType != null">
+            #{targetType},
+        </if>
+        <if test="targetId != null">
+            #{targetId},
+        </if>
+        <if test="goodCount != null">
+            #{goodCount},
+        </if>
+        <if test="publisherId != null">
+            #{publisherId},
+        </if>
+        now() ,now(), ${@com.liezh.domain.constant.GlobalConstants@NO_LOCK})
+    </insert>
+
+    <update id="updateComment" parameterType="com.liezh.domain.entity.Comment">
+        UPDATE comment
+        <set>
+            <if test="content != null"> content = #{content}, </if>
+            <!--<if test="targetType != null"> target_type = #{targetType} </if>-->
+            <if test="targetId != null"> target_id = #{targetId}, </if>
+            <if test="goodCount != null"> good_count = #{goodCount}, </if>
+            <if test="publisherId != null"> publisher_id = #{publisherId}, </if>
+            <!--<if test="createTime != null">create_time=#{createTime}</if>-->
+            update_time=now(),
+            <if test="isLock != null">is_lock=#{isLock} </if>
+        </set>
+        WHERE id=#{id}
+    </update>
+
+    <delete id="deleteComment">
+        DELETE FROM
+        comment
+        WHERE
+        id = #{commentId}
+    </delete>
+
+
+
+</mapper>
